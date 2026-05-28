@@ -15,4 +15,5 @@ pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 *.xlsx
+*.zip
 src/data/seed.json
