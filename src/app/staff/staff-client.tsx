@@ -38,6 +38,26 @@ function displayAccount(account: StaffAccount) {
   return account.email.replace(/@swimops\.local$/i, "");
 }
 
+function buildLocalAccount(form: FormData, existing?: StaffAccount | null): StaffAccount | null {
+  const account = String(form.get("account") ?? "").trim().toLowerCase();
+  const fullName = String(form.get("fullName") ?? "").trim();
+  const role = String(form.get("role") ?? "").trim() as UserRole;
+
+  if (!account || !fullName || !role) return null;
+
+  return {
+    id: existing?.id ?? `local-${Date.now()}`,
+    email: account === "admin" ? "admin@swimops.local" : `${account}@swimops.local`,
+    fullName,
+    role,
+    campus: String(form.get("campus") ?? "").trim() || null,
+    coachName: role === "coach" ? String(form.get("coachName") ?? "").trim() || null : null,
+    createdAt: existing?.createdAt ?? new Date().toISOString(),
+    lastSignInAt: existing?.lastSignInAt ?? null,
+    isCurrentUser: existing?.isCurrentUser ?? false
+  };
+}
+
 export function StaffClient({
   initialAccounts,
   hasAdminRuntime
@@ -45,6 +65,7 @@ export function StaffClient({
   initialAccounts: StaffAccount[];
   hasAdminRuntime: boolean;
 }) {
+  const [accounts, setAccounts] = useState(initialAccounts);
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<StaffAccount | null>(null);
@@ -53,7 +74,7 @@ export function StaffClient({
 
   const filteredAccounts = useMemo(() => {
     const normalized = query.trim().toLowerCase();
-    return initialAccounts.filter((account) => {
+    return accounts.filter((account) => {
       const shortAccount = displayAccount(account);
       const text = [account.fullName, shortAccount, account.role, account.campus, account.coachName]
         .filter(Boolean)
@@ -61,7 +82,7 @@ export function StaffClient({
         .toLowerCase();
       return !normalized || text.includes(normalized);
     });
-  }, [initialAccounts, query]);
+  }, [accounts, query]);
 
   function closeModal() {
     if (isPending) return;
@@ -89,7 +110,9 @@ export function StaffClient({
     startTransition(async () => {
       const result = await deleteStaffAccountAction(account.id);
       setToast(result.message);
-      if (result.ok) window.location.reload();
+      if (result.ok) {
+        setAccounts((current) => current.filter((item) => item.id !== account.id));
+      }
     });
   }
 
@@ -97,16 +120,25 @@ export function StaffClient({
     if (isPending || !hasAdminRuntime) return;
     event.preventDefault();
     const form = new FormData(event.currentTarget);
+    const optimisticAccount = buildLocalAccount(form, editingAccount);
 
     startTransition(async () => {
       const result = editingAccount
         ? await updateStaffAccountAction(editingAccount.id, form)
         : await createStaffAccountAction(form);
       setToast(result.message);
-      if (result.ok) {
-        closeModal();
-        window.location.reload();
+      if (!result.ok) return;
+
+      if (optimisticAccount) {
+        setAccounts((current) => {
+          if (editingAccount) {
+            return current.map((item) => (item.id === editingAccount.id ? { ...item, ...optimisticAccount } : item));
+          }
+          return [optimisticAccount, ...current];
+        });
       }
+
+      closeModal();
     });
   }
 

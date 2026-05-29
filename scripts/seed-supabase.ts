@@ -196,6 +196,25 @@ async function seedStaffAccounts() {
   return accounts;
 }
 
+async function removeLegacyStaffAccounts() {
+  const legacyEmails = ["frontdesk@swimops.local", "coach@swimops.local"];
+  const listed = await supabase.auth.admin.listUsers();
+
+  if (listed.error) {
+    throw new Error(`list users for cleanup: ${listed.error.message}`);
+  }
+
+  for (const email of legacyEmails) {
+    const found = listed.data.users.find((user) => user.email === email);
+    if (!found) continue;
+
+    const deleted = await supabase.auth.admin.deleteUser(found.id);
+    if (deleted.error) {
+      throw new Error(`delete legacy user ${email}: ${deleted.error.message}`);
+    }
+  }
+}
+
 async function clearExistingData() {
   throwIfError(await supabase.from("attendance_logs").delete().neq("id", "00000000-0000-0000-0000-000000000000"), "clear attendance");
   throwIfError(await supabase.from("schedules").delete().neq("id", "00000000-0000-0000-0000-000000000000"), "clear schedules");
@@ -333,6 +352,7 @@ function chunks<T>(items: T[], size: number) {
 }
 
 async function main() {
+  await removeLegacyStaffAccounts();
   const staffAccounts = await seedStaffAccounts();
   await clearExistingData();
   await seedProducts();
