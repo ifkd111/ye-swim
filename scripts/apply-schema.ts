@@ -1,14 +1,16 @@
+import dns from "node:dns";
 import fs from "node:fs";
 import path from "node:path";
 import pg from "pg";
 import { loadLocalEnv } from "./env";
 
 loadLocalEnv();
+dns.setDefaultResultOrder("ipv4first");
 
 const dbUrl = process.env.SUPABASE_DB_URL;
 
 if (!dbUrl) {
-  throw new Error("请先在 .env.local 填写 SUPABASE_DB_URL。可以从 Supabase Project Settings > Database > Connection string 复制。");
+  throw new Error("Missing SUPABASE_DB_URL in .env.local. Copy it from Supabase Project Settings > Database > Connection string.");
 }
 
 const schemaPath = path.join(process.cwd(), "supabase", "schema.sql");

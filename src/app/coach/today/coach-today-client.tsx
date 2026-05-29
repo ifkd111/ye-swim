@@ -6,17 +6,21 @@ import { EmptyState, Panel } from "@/components/ui";
 import { storageKeys, useRecords } from "@/hooks/use-local-records";
 import type { DataMode } from "@/lib/data-source";
 import { makeLocalId } from "@/lib/forms";
-import type { AttendanceLog, Schedule } from "@/lib/types";
+import type { AttendanceLog, Schedule, UserRole } from "@/lib/types";
 import { AttendanceCard } from "./attendance-card";
 
 export function CoachTodayClient({
   initialSchedules,
   initialAttendance,
-  dataMode
+  dataMode,
+  viewerRole,
+  viewerName
 }: {
   initialSchedules: Schedule[];
   initialAttendance: AttendanceLog[];
   dataMode: DataMode;
+  viewerRole: UserRole | null;
+  viewerName: string | null;
 }) {
   const persist = dataMode === "demo";
   const { records: schedules, setRecords: setSchedules } = useRecords(storageKeys.schedules, initialSchedules, persist);
@@ -67,6 +71,8 @@ export function CoachTodayClient({
     <AppShell
       title="教练今日课程"
       subtitle={dataMode === "supabase" ? "已连接 Supabase：勾选后写入真实消课日志。" : "手机端优先，只保留查看课程和勾选出勤。"}
+      viewerName={viewerName}
+      viewerRole={viewerRole}
     >
       <div className="mx-auto max-w-2xl">
         <Panel title={`待出勤 · ${pending.length}`}>

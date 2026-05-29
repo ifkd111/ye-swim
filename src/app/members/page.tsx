@@ -6,5 +6,5 @@ export const dynamic = "force-dynamic";
 export default async function MembersPage() {
   const data = await getAppData();
 
-  return <MembersClient dataMode={data.mode} initialMembers={data.members} />;
+  return <MembersClient dataMode={data.mode} initialMembers={data.members} viewerName={data.viewer.fullName} viewerRole={data.viewer.role} />;
 }

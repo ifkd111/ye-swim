@@ -1,16 +1,22 @@
+import { createServerClient, type SetAllCookies } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@supabase/ssr";
-import type { SetAllCookies } from "@supabase/ssr";
+
+const protectedPrefixes = ["/dashboard", "/members", "/products", "/schedule", "/attendance", "/coach", "/staff"];
+
+function hasSupabaseConfig() {
+  return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+}
+
+function isProtectedPath(pathname: string) {
+  return protectedPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+}
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
     request
   });
 
-  const hasSupabaseConfig =
-    process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!hasSupabaseConfig) {
+  if (!hasSupabaseConfig()) {
     return response;
   }
 
@@ -33,7 +39,21 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  await supabase.auth.getUser();
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+  const { pathname, search } = request.nextUrl;
+
+  if (!user && isProtectedPath(pathname)) {
+    const loginUrl = request.nextUrl.clone();
+    loginUrl.pathname = "/login";
+    loginUrl.searchParams.set("next", `${pathname}${search}`);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  if (user && pathname === "/login") {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
 
   return response;
 }

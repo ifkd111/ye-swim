@@ -9,8 +9,9 @@ import { AppShell } from "@/components/site-shell";
 import { Button, Panel } from "@/components/ui";
 import { useRecords, storageKeys } from "@/hooks/use-local-records";
 import { calculateMemberStatus, makeLocalId } from "@/lib/forms";
+import { canManageMembers } from "@/lib/permissions";
 import type { DataMode } from "@/lib/data-source";
-import type { Member, ProductType } from "@/lib/types";
+import type { Member, ProductType, UserRole } from "@/lib/types";
 
 const productOptions: Array<{ label: string; value: ProductType }> = [
   { label: "次卡", value: "class_pack" },
@@ -19,7 +20,17 @@ const productOptions: Array<{ label: string; value: ProductType }> = [
   { label: "VIP", value: "vip" }
 ];
 
-export function MembersClient({ initialMembers, dataMode }: { initialMembers: Member[]; dataMode: DataMode }) {
+export function MembersClient({
+  initialMembers,
+  dataMode,
+  viewerRole,
+  viewerName
+}: {
+  initialMembers: Member[];
+  dataMode: DataMode;
+  viewerRole: UserRole | null;
+  viewerName: string | null;
+}) {
   const { records: members, setRecords: setMembers, reset } = useRecords(storageKeys.members, initialMembers, dataMode === "demo");
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<"全部" | Member["status"]>("全部");
@@ -27,6 +38,7 @@ export function MembersClient({ initialMembers, dataMode }: { initialMembers: Me
   const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [toast, setToast] = useState("");
   const [isPending, startTransition] = useTransition();
+  const allowWrite = canManageMembers(viewerRole, dataMode);
   const nextNo = useMemo(() => Math.max(0, ...members.map((member) => member.memberNo)) + 1, [members]);
 
   const filteredMembers = useMemo(() => {
@@ -74,6 +86,7 @@ export function MembersClient({ initialMembers, dataMode }: { initialMembers: Me
   }
 
   function submit(event: FormEvent<HTMLFormElement>) {
+    if (isPending || !allowWrite) return;
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const member = buildMemberFromForm(form, editingMember ?? undefined);
@@ -103,11 +116,13 @@ export function MembersClient({ initialMembers, dataMode }: { initialMembers: Me
   }
 
   function editMember(member: Member) {
+    if (!allowWrite || isPending) return;
     setEditingMember(member);
     setOpen(true);
   }
 
   function deleteMember(member: Member) {
+    if (!allowWrite || isPending) return;
     const confirmed = window.confirm(`确认删除学员「${member.chineseName}」？相关排课和日志也会受到影响。`);
     if (!confirmed) return;
 
@@ -124,6 +139,7 @@ export function MembersClient({ initialMembers, dataMode }: { initialMembers: Me
   }
 
   function openCreate() {
+    if (!allowWrite || isPending) return;
     setEditingMember(null);
     setOpen(true);
   }
@@ -132,6 +148,8 @@ export function MembersClient({ initialMembers, dataMode }: { initialMembers: Me
     <AppShell
       title="学员管理"
       subtitle={dataMode === "supabase" ? "已连接 Supabase：新增、编辑、删除会写入数据库。" : "演示模式：新增、编辑、删除保存在浏览器本地。"}
+      viewerName={viewerName}
+      viewerRole={viewerRole}
     >
       <div className="mb-5 grid gap-3 lg:grid-cols-[1fr_auto_auto]">
         <label className="relative block">
@@ -160,10 +178,12 @@ export function MembersClient({ initialMembers, dataMode }: { initialMembers: Me
           ))}
         </div>
         <div className="flex gap-2">
-          <Button className="h-13 flex-1 lg:flex-none" onClick={openCreate}>
-            <Plus size={18} />
-            添加学员
-          </Button>
+          {allowWrite ? (
+            <Button className="h-13 flex-1 lg:flex-none" disabled={isPending} onClick={openCreate}>
+              <Plus size={18} />
+              添加学员
+            </Button>
+          ) : null}
           <Button className="h-13 px-3" disabled={dataMode === "supabase"} onClick={reset} title="重置演示数据" type="button" variant="secondary">
             <RotateCcw size={18} />
           </Button>
@@ -180,7 +200,12 @@ export function MembersClient({ initialMembers, dataMode }: { initialMembers: Me
         }
         title="全部学员"
       >
-        <MembersTable members={filteredMembers} onDelete={deleteMember} onEdit={editMember} />
+        <MembersTable
+          actionsDisabled={isPending}
+          members={filteredMembers}
+          onDelete={allowWrite ? deleteMember : undefined}
+          onEdit={allowWrite ? editMember : undefined}
+        />
       </Panel>
 
       <Modal

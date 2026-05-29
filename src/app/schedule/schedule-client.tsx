@@ -14,19 +14,24 @@ import { AppShell } from "@/components/site-shell";
 import { Button, Panel } from "@/components/ui";
 import { useRecords, storageKeys } from "@/hooks/use-local-records";
 import { makeLocalId } from "@/lib/forms";
+import { canManageSchedules } from "@/lib/permissions";
 import type { DataMode } from "@/lib/data-source";
-import type { AttendanceLog, Member, Schedule } from "@/lib/types";
+import type { AttendanceLog, Member, Schedule, UserRole } from "@/lib/types";
 
 export function ScheduleClient({
   initialSchedules,
   initialMembers,
   initialAttendance,
-  dataMode
+  dataMode,
+  viewerRole,
+  viewerName
 }: {
   initialSchedules: Schedule[];
   initialMembers: Member[];
   initialAttendance: AttendanceLog[];
   dataMode: DataMode;
+  viewerRole: UserRole | null;
+  viewerName: string | null;
 }) {
   const persist = dataMode === "demo";
   const { records: schedules, setRecords: setSchedules, reset } = useRecords(storageKeys.schedules, initialSchedules, persist);
@@ -38,6 +43,7 @@ export function ScheduleClient({
   const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
   const [toast, setToast] = useState("");
   const [isPending, startTransition] = useTransition();
+  const allowWrite = canManageSchedules(viewerRole, dataMode);
 
   const filteredSchedules = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -54,7 +60,7 @@ export function ScheduleClient({
   }, [query, schedules, view]);
 
   function completeSchedule(schedule: Schedule) {
-    if (schedule.lessonStatus === "completed") return;
+    if (schedule.lessonStatus === "completed" || isPending) return;
 
     if (dataMode === "supabase") {
       startTransition(async () => {
@@ -98,6 +104,7 @@ export function ScheduleClient({
   }
 
   function submit(event: FormEvent<HTMLFormElement>) {
+    if (isPending || !allowWrite) return;
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const memberId = String(form.get("memberId") ?? "");
@@ -144,11 +151,13 @@ export function ScheduleClient({
   }
 
   function editSchedule(schedule: Schedule) {
+    if (!allowWrite || isPending) return;
     setEditingSchedule(schedule);
     setOpen(true);
   }
 
   function deleteSchedule(schedule: Schedule) {
+    if (!allowWrite || isPending) return;
     const confirmed = window.confirm(`确认删除 ${schedule.lessonDate} ${schedule.lessonTime} 的「${schedule.memberName}」课程？`);
     if (!confirmed) return;
 
@@ -165,6 +174,7 @@ export function ScheduleClient({
   }
 
   function openCreate() {
+    if (!allowWrite || isPending) return;
     setEditingSchedule(null);
     setOpen(true);
   }
@@ -173,6 +183,8 @@ export function ScheduleClient({
     <AppShell
       title="排课表"
       subtitle={dataMode === "supabase" ? "已连接 Supabase：排课编辑、删除、出勤扣课都会写入数据库。" : "演示模式：排课编辑、删除、出勤扣课保存在浏览器本地。"}
+      viewerName={viewerName}
+      viewerRole={viewerRole}
     >
       <div className="mb-5 grid gap-3 lg:grid-cols-[1fr_auto_auto]">
         <label className="relative block">
@@ -201,10 +213,12 @@ export function ScheduleClient({
           ))}
         </div>
         <div className="flex gap-2">
-          <Button className="h-13 flex-1 lg:flex-none" onClick={openCreate}>
-            <CalendarPlus size={18} />
-            添加排课
-          </Button>
+          {allowWrite ? (
+            <Button className="h-13 flex-1 lg:flex-none" disabled={isPending} onClick={openCreate}>
+              <CalendarPlus size={18} />
+              添加排课
+            </Button>
+          ) : null}
           <Button className="h-13 px-3" disabled={dataMode === "supabase"} onClick={reset} title="重置排课演示数据" type="button" variant="secondary">
             <RotateCcw size={18} />
           </Button>
@@ -217,9 +231,10 @@ export function ScheduleClient({
         title="课程列表"
       >
         <SchedulesTable
+          actionsDisabled={isPending}
           onComplete={completeSchedule}
-          onDelete={deleteSchedule}
-          onEdit={editSchedule}
+          onDelete={allowWrite ? deleteSchedule : undefined}
+          onEdit={allowWrite ? editSchedule : undefined}
           schedules={filteredSchedules.slice(0, 220)}
         />
       </Panel>

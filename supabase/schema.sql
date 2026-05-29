@@ -105,7 +105,8 @@ create table if not exists public.attendance_logs (
   unique (source_schedule_id)
 );
 
-create or replace view public.member_balances as
+create or replace view public.member_balances
+with (security_invoker = true) as
 select
   m.id,
   m.member_no,
@@ -194,8 +195,8 @@ drop policy if exists "staff_read_products" on public.course_products;
 create policy "staff_read_products"
 on public.course_products
 for select
-to anon, authenticated
-using (public.current_user_role() in ('admin', 'frontdesk', 'coach') or public.current_user_role() is null);
+to authenticated
+using (public.current_user_role() in ('admin', 'frontdesk', 'coach'));
 
 drop policy if exists "admin_frontdesk_write_products" on public.course_products;
 create policy "admin_frontdesk_write_products"
@@ -209,10 +210,9 @@ drop policy if exists "staff_read_members" on public.members;
 create policy "staff_read_members"
 on public.members
 for select
-to anon, authenticated
+to authenticated
 using (
   public.current_user_role() in ('admin', 'frontdesk')
-  or public.current_user_role() is null
   or coach = public.current_coach_name()
 );
 
@@ -228,10 +228,9 @@ drop policy if exists "staff_read_schedules" on public.schedules;
 create policy "staff_read_schedules"
 on public.schedules
 for select
-to anon, authenticated
+to authenticated
 using (
   public.current_user_role() in ('admin', 'frontdesk')
-  or public.current_user_role() is null
   or coach = public.current_coach_name()
 );
 
@@ -250,10 +249,12 @@ for update
 to authenticated
 using (
   public.current_user_role() = 'admin'
+  or public.current_user_role() = 'frontdesk'
   or coach = public.current_coach_name()
 )
 with check (
   public.current_user_role() = 'admin'
+  or public.current_user_role() = 'frontdesk'
   or coach = public.current_coach_name()
 );
 
@@ -261,10 +262,9 @@ drop policy if exists "staff_read_attendance" on public.attendance_logs;
 create policy "staff_read_attendance"
 on public.attendance_logs
 for select
-to anon, authenticated
+to authenticated
 using (
   public.current_user_role() in ('admin', 'frontdesk')
-  or public.current_user_role() is null
   or coach = public.current_coach_name()
 );
 
@@ -285,12 +285,19 @@ security definer
 set search_path = public
 as $$
 declare
+  actor_role public.user_role;
   target_schedule public.schedules%rowtype;
   target_member public.members%rowtype;
   product_type public.product_type;
   deduction integer := 1;
   created_log public.attendance_logs%rowtype;
 begin
+  actor_role := public.current_user_role();
+
+  if actor_role is null then
+    raise exception 'Permission denied';
+  end if;
+
   select * into target_schedule
   from public.schedules
   where id = schedule_uuid
@@ -300,7 +307,7 @@ begin
     raise exception 'Schedule not found';
   end if;
 
-  if public.current_user_role() = 'coach' and target_schedule.coach <> public.current_coach_name() then
+  if actor_role = 'coach' and target_schedule.coach <> public.current_coach_name() then
     raise exception 'Permission denied';
   end if;
 
@@ -358,10 +365,13 @@ begin
 end;
 $$;
 
-grant usage on schema public to anon, authenticated;
-grant select on public.member_balances to anon;
+revoke usage on schema public from anon;
+grant usage on schema public to authenticated;
+
+revoke all on public.member_balances from anon;
+revoke all on public.course_products, public.members, public.schedules, public.attendance_logs from anon;
+grant select on public.profiles to authenticated;
 grant select on public.member_balances to authenticated;
-grant select on public.course_products, public.members, public.schedules, public.attendance_logs to anon;
 grant select on public.course_products, public.members, public.schedules, public.attendance_logs to authenticated;
 grant insert, update, delete on public.members, public.schedules to authenticated;
 grant insert on public.attendance_logs to authenticated;

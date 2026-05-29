@@ -1,16 +1,18 @@
+import dns from "node:dns";
 import fs from "node:fs";
 import path from "node:path";
 import { createClient } from "@supabase/supabase-js";
-import type { AttendanceLog, Member, Schedule, SeedData } from "../src/lib/types";
+import type { AttendanceLog, Member, Schedule, SeedData, UserRole } from "../src/lib/types";
 import { loadLocalEnv } from "./env";
 
 loadLocalEnv();
+dns.setDefaultResultOrder("ipv4first");
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!url || !serviceRoleKey) {
-  throw new Error("请先在 .env.local 填写 NEXT_PUBLIC_SUPABASE_URL 和 SUPABASE_SERVICE_ROLE_KEY");
+  throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in .env.local");
 }
 
 const supabase = createClient(url, serviceRoleKey, {
@@ -26,6 +28,16 @@ const seed = JSON.parse(fs.readFileSync(seedPath, "utf8")) as SeedData;
 const productIdMap = new Map<string, string>();
 const memberIdMap = new Map<string, string>();
 const scheduleIdMap = new Map<string, string>();
+
+type StaffSeed = {
+  account: string;
+  email: string;
+  password: string;
+  fullName: string;
+  role: UserRole;
+  campus: string | null;
+  coachName: string | null;
+};
 
 async function failIfError<T>({ data, error }: { data: T | null; error: any }, label: string): Promise<T> {
   if (error) {
@@ -43,38 +55,145 @@ function throwIfError({ error }: { error: any }, label: string) {
   }
 }
 
-async function seedAdmin() {
-  const email = process.env.DEMO_ADMIN_EMAIL || "admin@swimops.local";
-  const password = process.env.DEMO_ADMIN_PASSWORD || "1324";
-  const { data: list } = await supabase.auth.admin.listUsers();
-  const existing = list.users.find((user) => user.email === email);
-  let user = existing;
+function envOrDefault(key: string, fallback: string) {
+  const value = process.env[key]?.trim();
+  return value || fallback;
+}
 
-  if (!user) {
-    const created = await supabase.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: { full_name: "管理员" }
-    });
+function accountToEmail(account: string) {
+  return account === "admin" ? "admin@swimops.local" : `${account}@swimops.local`;
+}
 
-    if (created.error || !created.data.user) {
-      throw new Error(`create admin user: ${created.error?.message ?? "no user returned"}`);
+function assertValidAccount(account: StaffSeed) {
+  if (account.role === "admin") {
+    if (account.account !== "admin") {
+      throw new Error("Admin account must be the unique admin");
     }
-
-    user = created.data.user;
+    return;
   }
 
-  throwIfError(
-    await supabase.from("profiles").upsert({
-      id: user.id,
-      full_name: "管理员",
+  if (account.role === "coach" && !account.account.startsWith("jl")) {
+    throw new Error(`Coach account must start with jl: ${account.account}`);
+  }
+
+  if (account.role === "frontdesk" && !account.account.startsWith("qt")) {
+    throw new Error(`Frontdesk account must start with qt: ${account.account}`);
+  }
+}
+
+function assertStrongEnoughPassword(account: StaffSeed) {
+  if (account.password.length < 4) {
+    throw new Error(`${account.account} password must be at least 4 characters`);
+  }
+}
+
+function resolveCoachAssignment() {
+  const scheduleMatch = seed.schedules.find((schedule) => schedule.coach && schedule.coach !== "未分配");
+  const memberMatch = seed.members.find((member) => member.coach && member.coach !== "未分配");
+
+  const coachName = envOrDefault("DEMO_COACH_NAME", scheduleMatch?.coach ?? memberMatch?.coach ?? "");
+  const campus = process.env.DEMO_COACH_CAMPUS?.trim() || scheduleMatch?.campus || memberMatch?.campus || null;
+
+  if (!coachName) {
+    throw new Error("Could not infer DEMO_COACH_NAME from seed.json. Set DEMO_COACH_NAME in .env.local.");
+  }
+
+  return {
+    coachName,
+    campus
+  };
+}
+
+async function ensureAuthUser(account: StaffSeed) {
+  const listed = await supabase.auth.admin.listUsers();
+  if (listed.error) {
+    throw new Error(`list users: ${listed.error.message}`);
+  }
+
+  const existing = listed.data.users.find((user) => user.email === account.email);
+
+  if (existing) {
+    const updated = await supabase.auth.admin.updateUserById(existing.id, {
+      password: account.password,
+      email_confirm: true,
+      user_metadata: { full_name: account.fullName, account: account.account, role: account.role }
+    });
+
+    if (updated.error || !updated.data.user) {
+      throw new Error(`update auth user ${account.email}: ${updated.error?.message ?? "no user returned"}`);
+    }
+
+    return updated.data.user;
+  }
+
+  const created = await supabase.auth.admin.createUser({
+    email: account.email,
+    password: account.password,
+    email_confirm: true,
+    user_metadata: { full_name: account.fullName, account: account.account, role: account.role }
+  });
+
+  if (created.error || !created.data.user) {
+    throw new Error(`create auth user ${account.email}: ${created.error?.message ?? "no user returned"}`);
+  }
+
+  return created.data.user;
+}
+
+async function seedStaffAccounts() {
+  const coachAssignment = resolveCoachAssignment();
+  const adminAccount = envOrDefault("DEMO_ADMIN_ACCOUNT", "admin").toLowerCase();
+  const frontdeskAccount = envOrDefault("DEMO_FRONTDESK_ACCOUNT", "qt001").toLowerCase();
+  const coachAccount = envOrDefault("DEMO_COACH_ACCOUNT", "jl001").toLowerCase();
+
+  const accounts: StaffSeed[] = [
+    {
+      account: adminAccount,
+      email: accountToEmail(adminAccount),
+      password: envOrDefault("DEMO_ADMIN_PASSWORD", "132400"),
+      fullName: "管理员",
       role: "admin",
       campus: null,
-      coach_name: null
-    }),
-    "upsert admin profile"
-  );
+      coachName: null
+    },
+    {
+      account: frontdeskAccount,
+      email: accountToEmail(frontdeskAccount),
+      password: envOrDefault("DEMO_FRONTDESK_PASSWORD", "132400"),
+      fullName: "前台",
+      role: "frontdesk",
+      campus: coachAssignment.campus,
+      coachName: null
+    },
+    {
+      account: coachAccount,
+      email: accountToEmail(coachAccount),
+      password: envOrDefault("DEMO_COACH_PASSWORD", "132400"),
+      fullName: coachAssignment.coachName,
+      role: "coach",
+      campus: coachAssignment.campus,
+      coachName: coachAssignment.coachName
+    }
+  ];
+
+  for (const account of accounts) {
+    assertValidAccount(account);
+    assertStrongEnoughPassword(account);
+    const user = await ensureAuthUser(account);
+    throwIfError(
+      await supabase.from("profiles").upsert({
+        id: user.id,
+        full_name: account.fullName,
+        role: account.role,
+        campus: account.campus,
+        coach_name: account.coachName,
+        updated_at: new Date().toISOString()
+      }),
+      `upsert profile ${account.account}`
+    );
+  }
+
+  return accounts;
 }
 
 async function clearExistingData() {
@@ -214,12 +333,16 @@ function chunks<T>(items: T[], size: number) {
 }
 
 async function main() {
-  await seedAdmin();
+  const staffAccounts = await seedStaffAccounts();
   await clearExistingData();
   await seedProducts();
   await seedMembers();
   await seedSchedules();
   await seedAttendance();
+
+  const admin = staffAccounts.find((account) => account.role === "admin");
+  const frontdesk = staffAccounts.find((account) => account.role === "frontdesk");
+  const coach = staffAccounts.find((account) => account.role === "coach");
 
   console.log("Supabase seeded");
   console.log({
@@ -227,7 +350,10 @@ async function main() {
     members: seed.members.length,
     schedules: seed.schedules.length,
     attendanceLogs: seed.attendanceLogs.length,
-    admin: process.env.DEMO_ADMIN_EMAIL || "admin@swimops.local"
+    admin: admin?.account,
+    frontdesk: frontdesk?.account,
+    coach: coach?.account,
+    coachName: coach?.coachName
   });
 }
 

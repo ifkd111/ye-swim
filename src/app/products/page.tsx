@@ -6,10 +6,15 @@ import { getProductTypeLabel } from "@/lib/status";
 export const dynamic = "force-dynamic";
 
 export default async function ProductsPage() {
-  const { products, mode } = await getAppData();
+  const { products, mode, viewer } = await getAppData();
 
   return (
-    <AppShell title="课程产品" subtitle={mode === "supabase" ? "已连接 Supabase：产品来自数据库。" : "次卡扣课，月卡/集训/VIP 不扣课。"}>
+    <AppShell
+      title="课程产品"
+      subtitle={mode === "supabase" ? "已连接 Supabase：产品来自数据库。" : "次卡扣课，月卡/集训/VIP 不扣课。"}
+      viewerName={viewer.fullName}
+      viewerRole={viewer.role}
+    >
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {products.map((product) => (
           <Panel key={product.id} className="p-5">

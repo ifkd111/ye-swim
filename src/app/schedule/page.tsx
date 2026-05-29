@@ -12,6 +12,8 @@ export default async function SchedulePage() {
       initialAttendance={data.attendanceLogs}
       initialMembers={data.members}
       initialSchedules={data.schedules}
+      viewerName={data.viewer.fullName}
+      viewerRole={data.viewer.role}
     />
   );
 }

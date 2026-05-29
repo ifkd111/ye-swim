@@ -19,6 +19,7 @@ export function AttendanceCard({
   const [message, setMessage] = useState("");
 
   function confirm() {
+    if (checked || isPending) return;
     startTransition(async () => {
       const result = await markAttendance(schedule.id);
       if (result.ok) {

@@ -7,9 +7,19 @@ import { AppShell } from "@/components/site-shell";
 import { Button, Panel } from "@/components/ui";
 import { useRecords, storageKeys } from "@/hooks/use-local-records";
 import type { DataMode } from "@/lib/data-source";
-import type { AttendanceLog } from "@/lib/types";
+import type { AttendanceLog, UserRole } from "@/lib/types";
 
-export function AttendanceClient({ initialLogs, dataMode }: { initialLogs: AttendanceLog[]; dataMode: DataMode }) {
+export function AttendanceClient({
+  initialLogs,
+  dataMode,
+  viewerRole,
+  viewerName
+}: {
+  initialLogs: AttendanceLog[];
+  dataMode: DataMode;
+  viewerRole: UserRole | null;
+  viewerName: string | null;
+}) {
   const { records: logs, reset } = useRecords(storageKeys.attendance, initialLogs, dataMode === "demo");
   const [query, setQuery] = useState("");
 
@@ -29,6 +39,8 @@ export function AttendanceClient({ initialLogs, dataMode }: { initialLogs: Atten
     <AppShell
       title="消课记录"
       subtitle={dataMode === "supabase" ? "已连接 Supabase：消课日志来自数据库。" : "排课页或教练页勾选出勤后，会即时写入这里的本地日志。"}
+      viewerName={viewerName}
+      viewerRole={viewerRole}
     >
       <div className="mb-5 grid gap-3 lg:grid-cols-[1fr_auto]">
         <label className="relative block">

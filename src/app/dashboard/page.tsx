@@ -12,6 +12,8 @@ export default async function DashboardPage() {
       initialAttendance={data.attendanceLogs}
       initialMembers={data.members}
       initialSchedules={data.schedules}
+      viewerName={data.viewer.fullName}
+      viewerRole={data.viewer.role}
     />
   );
 }

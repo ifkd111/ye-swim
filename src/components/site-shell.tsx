@@ -1,6 +1,9 @@
 import Link from "next/link";
-import { CalendarDays, ClipboardCheck, GraduationCap, LayoutDashboard, LogIn, PackageOpen, Users } from "lucide-react";
+import { CalendarDays, ClipboardCheck, GraduationCap, LayoutDashboard, LogIn, PackageOpen, ShieldPlus, Users } from "lucide-react";
+import { LogoutButton } from "@/components/logout-button";
 import { ButtonLink } from "@/components/ui";
+import { canManageStaff, getRoleLabel } from "@/lib/permissions";
+import type { UserRole } from "@/lib/types";
 
 const nav = [
   { href: "/dashboard", label: "概览", icon: LayoutDashboard },
@@ -8,7 +11,8 @@ const nav = [
   { href: "/products", label: "产品", icon: PackageOpen },
   { href: "/schedule", label: "排课", icon: CalendarDays },
   { href: "/attendance", label: "消课", icon: ClipboardCheck },
-  { href: "/coach/today", label: "教练", icon: GraduationCap }
+  { href: "/coach/today", label: "教练", icon: GraduationCap },
+  { href: "/staff", label: "账号", icon: ShieldPlus }
 ];
 
 export function PublicHeader() {
@@ -39,7 +43,21 @@ export function PublicHeader() {
   );
 }
 
-export function AppShell({ children, title, subtitle }: { children: React.ReactNode; title: string; subtitle: string }) {
+export function AppShell({
+  children,
+  title,
+  subtitle,
+  viewerName,
+  viewerRole
+}: {
+  children: React.ReactNode;
+  title: string;
+  subtitle: string;
+  viewerName?: string | null;
+  viewerRole?: UserRole | null;
+}) {
+  const visibleNav = nav.filter((item) => item.href !== "/staff" || canManageStaff(viewerRole ?? null));
+
   return (
     <div className="min-h-screen bg-[#f5f8fb]">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 border-r border-slate-200/70 bg-white/90 backdrop-blur lg:block">
@@ -53,7 +71,7 @@ export function AppShell({ children, title, subtitle }: { children: React.ReactN
           </div>
         </div>
         <nav className="space-y-2 px-4 py-5">
-          {nav.map((item) => {
+          {visibleNav.map((item) => {
             const Icon = item.icon;
             return (
               <Link
@@ -76,15 +94,18 @@ export function AppShell({ children, title, subtitle }: { children: React.ReactN
               <div>
                 <h1 className="text-2xl font-black tracking-normal text-ink">{title}</h1>
                 <p className="mt-1 text-sm font-medium text-slate-500">{subtitle}</p>
+                {viewerRole ? (
+                  <p className="mt-2 text-xs font-bold uppercase tracking-[0.16em] text-pool-700">
+                    {getRoleLabel(viewerRole)}
+                    {viewerName ? ` · ${viewerName}` : ""}
+                  </p>
+                ) : null}
               </div>
-              <ButtonLink href="/login" className="hidden h-9 sm:inline-flex" variant="secondary">
-                <LogIn size={16} />
-                登录
-              </ButtonLink>
+              <LogoutButton className="h-9" />
             </div>
           </div>
           <nav className="soft-scrollbar flex gap-2 overflow-x-auto border-t border-slate-100 px-2 py-2 lg:hidden">
-            {nav.map((item) => {
+            {visibleNav.map((item) => {
               const Icon = item.icon;
               return (
                 <Link

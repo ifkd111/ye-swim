@@ -6,11 +6,13 @@ import type { AttendanceLog, Member, Schedule } from "@/lib/types";
 export function MembersTable({
   members,
   onEdit,
-  onDelete
+  onDelete,
+  actionsDisabled = false
 }: {
   members: Member[];
   onEdit?: (member: Member) => void;
   onDelete?: (member: Member) => void;
+  actionsDisabled?: boolean;
 }) {
   return (
     <div className="soft-scrollbar overflow-x-auto">
@@ -50,13 +52,19 @@ export function MembersTable({
                 <td className="px-4 py-3">
                   <div className="flex gap-2">
                     {onEdit ? (
-                      <Button className="h-9 rounded-xl px-3" onClick={() => onEdit(member)} type="button" variant="secondary">
+                      <Button className="h-9 rounded-xl px-3" disabled={actionsDisabled} onClick={() => onEdit(member)} type="button" variant="secondary">
                         <Pencil size={15} />
                         编辑
                       </Button>
                     ) : null}
                     {onDelete ? (
-                      <Button className="h-9 rounded-xl px-3 text-red-600 hover:bg-red-50" onClick={() => onDelete(member)} type="button" variant="secondary">
+                      <Button
+                        className="h-9 rounded-xl px-3 text-red-600 hover:bg-red-50"
+                        disabled={actionsDisabled}
+                        onClick={() => onDelete(member)}
+                        type="button"
+                        variant="secondary"
+                      >
                         <Trash2 size={15} />
                         删除
                       </Button>
@@ -76,12 +84,14 @@ export function SchedulesTable({
   schedules,
   onComplete,
   onEdit,
-  onDelete
+  onDelete,
+  actionsDisabled = false
 }: {
   schedules: Schedule[];
   onComplete?: (schedule: Schedule) => void;
   onEdit?: (schedule: Schedule) => void;
   onDelete?: (schedule: Schedule) => void;
+  actionsDisabled?: boolean;
 }) {
   return (
     <div className="soft-scrollbar overflow-x-auto">
@@ -132,7 +142,7 @@ export function SchedulesTable({
                     {onComplete ? (
                       <Button
                         className="h-9 rounded-xl px-3"
-                        disabled={schedule.lessonStatus === "completed"}
+                        disabled={actionsDisabled || schedule.lessonStatus === "completed"}
                         onClick={() => onComplete(schedule)}
                         type="button"
                         variant={schedule.lessonStatus === "completed" ? "secondary" : "primary"}
@@ -142,13 +152,19 @@ export function SchedulesTable({
                       </Button>
                     ) : null}
                     {onEdit ? (
-                      <Button className="h-9 rounded-xl px-3" onClick={() => onEdit(schedule)} type="button" variant="secondary">
+                      <Button className="h-9 rounded-xl px-3" disabled={actionsDisabled} onClick={() => onEdit(schedule)} type="button" variant="secondary">
                         <Pencil size={15} />
                         编辑
                       </Button>
                     ) : null}
                     {onDelete ? (
-                      <Button className="h-9 rounded-xl px-3 text-red-600 hover:bg-red-50" onClick={() => onDelete(schedule)} type="button" variant="secondary">
+                      <Button
+                        className="h-9 rounded-xl px-3 text-red-600 hover:bg-red-50"
+                        disabled={actionsDisabled}
+                        onClick={() => onDelete(schedule)}
+                        type="button"
+                        variant="secondary"
+                      >
                         <Trash2 size={15} />
                         删除
                       </Button>
