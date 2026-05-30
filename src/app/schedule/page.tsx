@@ -1,10 +1,10 @@
-import { getAppData } from "@/lib/data-source";
+import { getSchedulePageData } from "@/lib/data-source";
 import { ScheduleClient } from "./schedule-client";
 
 export const dynamic = "force-dynamic";
 
 export default async function SchedulePage() {
-  const data = await getAppData();
+  const data = await getSchedulePageData();
 
   return (
     <ScheduleClient

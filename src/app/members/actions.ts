@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { clearDataCache } from "@/lib/data-source";
 import { createClient } from "@/lib/supabase/server";
 
 function emptyToNull(value: FormDataEntryValue | null) {
@@ -46,6 +47,7 @@ export async function createMemberAction(formData: FormData) {
   const { error } = await supabase.from("members").insert(payload);
   if (error) return { ok: false, message: error.message };
 
+  clearDataCache();
   revalidatePath("/members");
   revalidatePath("/dashboard");
   return { ok: true, message: "学员已保存" };
@@ -75,6 +77,7 @@ export async function updateMemberAction(memberId: string, formData: FormData) {
   const { error } = await supabase.from("members").update(payload).eq("id", memberId);
   if (error) return { ok: false, message: error.message };
 
+  clearDataCache();
   revalidatePath("/members");
   revalidatePath("/dashboard");
   revalidatePath("/schedule");
@@ -86,6 +89,7 @@ export async function deleteMemberAction(memberId: string) {
   const { error } = await supabase.from("members").delete().eq("id", memberId);
   if (error) return { ok: false, message: error.message };
 
+  clearDataCache();
   revalidatePath("/members");
   revalidatePath("/dashboard");
   revalidatePath("/schedule");

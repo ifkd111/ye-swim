@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { clearDataCache } from "@/lib/data-source";
 import { createClient } from "@/lib/supabase/server";
 
 function emptyToNull(value: FormDataEntryValue | null) {
@@ -35,6 +36,7 @@ export async function createScheduleAction(formData: FormData) {
   const { error } = await supabase.from("schedules").insert(payload);
   if (error) return { ok: false, message: error.message };
 
+  clearDataCache();
   revalidatePath("/schedule");
   revalidatePath("/dashboard");
   revalidatePath("/coach/today");
@@ -63,6 +65,7 @@ export async function updateScheduleAction(scheduleId: string, formData: FormDat
   });
   if (syncError) return { ok: false, message: syncError.message };
 
+  clearDataCache();
   revalidatePath("/schedule");
   revalidatePath("/dashboard");
   revalidatePath("/coach/today");
@@ -77,6 +80,7 @@ export async function deleteScheduleAction(scheduleId: string) {
   const { error } = await supabase.from("schedules").delete().eq("id", scheduleId);
   if (error) return { ok: false, message: error.message };
 
+  clearDataCache();
   revalidatePath("/schedule");
   revalidatePath("/dashboard");
   revalidatePath("/coach/today");
@@ -93,6 +97,7 @@ export async function completeScheduleAction(scheduleId: string) {
 
   if (error) return { ok: false, message: error.message };
 
+  clearDataCache();
   revalidatePath("/schedule");
   revalidatePath("/dashboard");
   revalidatePath("/coach/today");

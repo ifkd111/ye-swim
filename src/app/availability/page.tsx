@@ -1,10 +1,10 @@
 import { AvailabilityClient } from "./availability-client";
-import { getAppData } from "@/lib/data-source";
+import { getAvailabilityPageData } from "@/lib/data-source";
 
 export const dynamic = "force-dynamic";
 
 export default async function AvailabilityPage() {
-  const data = await getAppData();
+  const data = await getAvailabilityPageData();
 
   return (
     <AvailabilityClient

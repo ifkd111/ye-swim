@@ -1,10 +1,10 @@
 import { CourseApplicationsClient } from "./course-applications-client";
-import { getAppData } from "@/lib/data-source";
+import { getCourseApplicationsPageData } from "@/lib/data-source";
 
 export const dynamic = "force-dynamic";
 
 export default async function CourseApplicationsPage() {
-  const data = await getAppData();
+  const data = await getCourseApplicationsPageData();
 
   return (
     <CourseApplicationsClient

@@ -1,12 +1,12 @@
 import { StaffClient } from "./staff-client";
-import { getAppData } from "@/lib/data-source";
+import { getStaffPageData } from "@/lib/data-source";
 import { listStaffAccounts } from "@/lib/supabase/staff-admin";
 
 export const dynamic = "force-dynamic";
 
 export default async function StaffPage() {
   const { accounts, hasAdminRuntime } = await listStaffAccounts();
-  const data = await getAppData();
+  const data = await getStaffPageData();
 
   return (
     <StaffClient

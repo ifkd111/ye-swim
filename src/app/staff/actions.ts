@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { clearDataCache } from "@/lib/data-source";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { hasSupabaseAdminConfig } from "@/lib/supabase/config";
 import { assertAdminSession } from "@/lib/supabase/staff-admin";
@@ -140,6 +141,7 @@ export async function createStaffAccountAction(formData: FormData) {
     return { ok: false, message: profileError.message };
   }
 
+  clearDataCache();
   revalidatePath("/staff");
   return { ok: true, message: "员工账号已创建" };
 }
@@ -199,6 +201,7 @@ export async function updateStaffAccountAction(userId: string, formData: FormDat
     return { ok: false, message: profileError.message };
   }
 
+  clearDataCache();
   revalidatePath("/staff");
   revalidatePath("/coach/today");
   revalidatePath("/schedule");
@@ -229,6 +232,7 @@ export async function deleteStaffAccountAction(userId: string) {
     return { ok: false, message: deleted.error.message };
   }
 
+  clearDataCache();
   revalidatePath("/staff");
   return { ok: true, message: "员工账号已删除" };
 }

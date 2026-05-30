@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { clearDataCache } from "@/lib/data-source";
 import { createClient } from "@/lib/supabase/server";
 
 export async function markAttendance(scheduleId: string) {
@@ -28,6 +29,7 @@ export async function markAttendance(scheduleId: string) {
     };
   }
 
+  clearDataCache();
   revalidatePath("/coach/today");
   revalidatePath("/dashboard");
   revalidatePath("/schedule");

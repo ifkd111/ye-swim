@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireStudentViewer } from "@/lib/authz";
+import { clearDataCache } from "@/lib/data-source";
 import { createClient } from "@/lib/supabase/server";
 
 function emptyToNull(value: FormDataEntryValue | null) {
@@ -24,6 +25,7 @@ export async function createStudentBookingRequestAction(slotId: string, formData
 
   if (error) return { ok: false, message: error.message };
 
+  clearDataCache();
   revalidatePath("/student");
   revalidatePath("/booking-requests");
   return { ok: true, message: "预约申请已提交，等待管理员审批" };
@@ -46,6 +48,7 @@ export async function createCourseApplicationAction(productId: string, formData:
 
   if (error) return { ok: false, message: error.message };
 
+  clearDataCache();
   revalidatePath("/student");
   revalidatePath("/course-applications");
   return { ok: true, message: "课程申请已提交，等待管理员审批" };

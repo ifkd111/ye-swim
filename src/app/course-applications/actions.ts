@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdminViewer } from "@/lib/authz";
+import { clearDataCache } from "@/lib/data-source";
 import { createClient } from "@/lib/supabase/server";
 
 function today() {
@@ -59,6 +60,7 @@ export async function approveCourseApplicationAction(applicationId: string) {
 
   if (error) return { ok: false, message: error.message };
 
+  clearDataCache();
   revalidatePath("/course-applications");
   revalidatePath("/members");
   revalidatePath("/student");
@@ -85,6 +87,7 @@ export async function rejectCourseApplicationAction(applicationId: string) {
 
   if (error) return { ok: false, message: error.message };
 
+  clearDataCache();
   revalidatePath("/course-applications");
   revalidatePath("/student");
   return { ok: true, message: "课程申请已拒绝" };

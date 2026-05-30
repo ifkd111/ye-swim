@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdminViewer } from "@/lib/authz";
+import { clearDataCache } from "@/lib/data-source";
 import { parseStandardImportWorkbook, type ImportIssue, type StandardImportParseResult } from "@/lib/standard-import";
 import { createClient } from "@/lib/supabase/server";
 import type { ProductType, LessonStatus } from "@/lib/types";
@@ -316,6 +317,7 @@ export async function importStandardWorkbookAction(formData: FormData): Promise<
       attendanceCount += 1;
     }
 
+    clearDataCache();
     revalidatePath("/imports");
     revalidatePath("/members");
     revalidatePath("/schedule");

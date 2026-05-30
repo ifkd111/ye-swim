@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdminViewer } from "@/lib/authz";
+import { clearDataCache } from "@/lib/data-source";
 import { createClient } from "@/lib/supabase/server";
 
 export async function approveBookingRequestAction(requestId: string) {
@@ -18,6 +19,7 @@ export async function approveBookingRequestAction(requestId: string) {
 
   if (error) return { ok: false, message: error.message };
 
+  clearDataCache();
   revalidatePath("/booking-requests");
   revalidatePath("/schedule");
   revalidatePath("/coach/today");
@@ -39,6 +41,7 @@ export async function rejectBookingRequestAction(requestId: string) {
 
   if (error) return { ok: false, message: error.message };
 
+  clearDataCache();
   revalidatePath("/booking-requests");
   revalidatePath("/student");
   return { ok: true, message: "预约已拒绝" };

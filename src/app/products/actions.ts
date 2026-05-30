@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdminViewer } from "@/lib/authz";
+import { clearDataCache } from "@/lib/data-source";
 import { createClient } from "@/lib/supabase/server";
 import type { ProductType } from "@/lib/types";
 
@@ -35,6 +36,7 @@ export async function createProductAction(formData: FormData) {
   const { error } = await supabase.from("course_products").insert(payload);
   if (error) return { ok: false, message: error.message };
 
+  clearDataCache();
   revalidatePath("/products");
   revalidatePath("/student");
   return { ok: true, message: "课程产品已创建" };
@@ -54,6 +56,7 @@ export async function updateProductAction(productId: string, formData: FormData)
   const { error } = await supabase.from("course_products").update(payload).eq("id", productId);
   if (error) return { ok: false, message: error.message };
 
+  clearDataCache();
   revalidatePath("/products");
   revalidatePath("/student");
   return { ok: true, message: "课程产品已更新" };

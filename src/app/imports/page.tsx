@@ -1,10 +1,10 @@
 import { ImportsClient } from "./imports-client";
-import { getAppData } from "@/lib/data-source";
+import { getImportsPageData } from "@/lib/data-source";
 
 export const dynamic = "force-dynamic";
 
 export default async function ImportsPage() {
-  const data = await getAppData();
+  const data = await getImportsPageData();
 
   return <ImportsClient mode={data.mode} viewerName={data.viewer.fullName} viewerRole={data.viewer.role} />;
 }

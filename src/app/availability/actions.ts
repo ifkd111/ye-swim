@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdminViewer, getViewerProfile } from "@/lib/authz";
+import { clearDataCache } from "@/lib/data-source";
 import { createClient } from "@/lib/supabase/server";
 
 function emptyToNull(value: FormDataEntryValue | null) {
@@ -44,6 +45,7 @@ export async function createAvailabilitySlotAction(formData: FormData) {
   const { error } = await supabase.from("coach_availability_slots").insert(payload);
   if (error) return { ok: false, message: error.message };
 
+  clearDataCache();
   revalidatePath("/availability");
   revalidatePath("/student");
   return { ok: true, message: viewer.role === "coach" ? "空余时间已提交，等待管理员发布" : "空余时间已保存" };
@@ -84,6 +86,7 @@ export async function updateAvailabilitySlotAction(slotId: string, formData: For
   const { error } = await supabase.from("coach_availability_slots").update(payload).eq("id", slotId);
   if (error) return { ok: false, message: error.message };
 
+  clearDataCache();
   revalidatePath("/availability");
   revalidatePath("/student");
   return { ok: true, message: "空余时间已更新" };
@@ -104,6 +107,7 @@ export async function publishAvailabilitySlotAction(slotId: string) {
 
   if (error) return { ok: false, message: error.message };
 
+  clearDataCache();
   revalidatePath("/availability");
   revalidatePath("/student");
   return { ok: true, message: "已发布给学员预约" };
@@ -124,6 +128,7 @@ export async function closeAvailabilitySlotAction(slotId: string) {
 
   if (error) return { ok: false, message: error.message };
 
+  clearDataCache();
   revalidatePath("/availability");
   revalidatePath("/student");
   return { ok: true, message: "已关闭该时间" };
@@ -139,6 +144,7 @@ export async function deleteAvailabilitySlotAction(slotId: string) {
   const { error } = await supabase.from("coach_availability_slots").delete().eq("id", slotId);
   if (error) return { ok: false, message: error.message };
 
+  clearDataCache();
   revalidatePath("/availability");
   revalidatePath("/student");
   return { ok: true, message: "空余时间已删除" };

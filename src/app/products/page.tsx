@@ -1,10 +1,10 @@
 import { ProductsClient } from "./products-client";
-import { getAppData } from "@/lib/data-source";
+import { getProductsPageData } from "@/lib/data-source";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProductsPage() {
-  const { products, mode, viewer } = await getAppData();
+  const { products, mode, viewer } = await getProductsPageData();
 
   return (
     <ProductsClient

@@ -1,10 +1,10 @@
-import { getAppData } from "@/lib/data-source";
+import { getCoachTodayPageData } from "@/lib/data-source";
 import { CoachTodayClient } from "./coach-today-client";
 
 export const dynamic = "force-dynamic";
 
 export default async function CoachTodayPage() {
-  const data = await getAppData();
+  const data = await getCoachTodayPageData();
 
   return (
     <CoachTodayClient
