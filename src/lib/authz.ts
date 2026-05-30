@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { accountFromEmail, normalizeAccount, roleFromAccount } from "@/lib/account-role";
 import type { UserRole } from "@/lib/types";
 
 export type ViewerProfile = {
@@ -24,7 +25,11 @@ export async function getViewerProfile(): Promise<ViewerProfile | null> {
   const { data, error } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
 
   const metadata = user.user_metadata ?? {};
-  const role = isRole(data?.role) ? data.role : isRole(metadata.role) ? metadata.role : null;
+  const account =
+    normalizeAccount(data?.account) ||
+    normalizeAccount(metadata.account) ||
+    accountFromEmail(user.email);
+  const role = roleFromAccount(account) ?? (isRole(data?.role) ? data.role : isRole(metadata.role) ? metadata.role : null);
   if (error || !role) return null;
 
   return {

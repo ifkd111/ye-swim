@@ -1,4 +1,5 @@
 import { getAttendanceLogs as mockAttendance, getMembers as mockMembers, getSchedules as mockSchedules, getSeedData } from "@/lib/mock-data";
+import { accountFromEmail, normalizeAccount, roleFromAccount } from "@/lib/account-role";
 import { hasSupabaseBrowserConfig } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -91,7 +92,11 @@ export async function getAppData(): Promise<AppData> {
     throw profileResult.error;
   }
 
-  const metadataRole = userRoleFromMetadata(profileResult.data?.role ?? metadata.role);
+  const account =
+    normalizeAccount(profileResult.data?.account) ||
+    normalizeAccount(metadata.account) ||
+    accountFromEmail(user?.email);
+  const metadataRole = roleFromAccount(account) ?? userRoleFromMetadata(profileResult.data?.role ?? metadata.role);
   const metadataName =
     typeof profileResult.data?.full_name === "string"
       ? profileResult.data.full_name

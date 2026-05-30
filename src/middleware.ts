@@ -1,5 +1,6 @@
 import { createServerClient, type SetAllCookies } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
+import { accountFromEmail, accountHomePath, normalizeAccount } from "@/lib/account-role";
 
 const protectedPrefixes = [
   "/dashboard",
@@ -22,6 +23,22 @@ function hasSupabaseConfig() {
 
 function isProtectedPath(pathname: string) {
   return protectedPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+}
+
+function roleAllowedPath(account: string, pathname: string) {
+  if (account === "admin") return true;
+
+  if (account.startsWith("jl")) {
+    return ["/coach", "/availability", "/schedule", "/members"].some(
+      (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+    );
+  }
+
+  if (account.startsWith("xy")) {
+    return ["/student", "/products"].some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+  }
+
+  return false;
 }
 
 export async function middleware(request: NextRequest) {
@@ -65,9 +82,16 @@ export async function middleware(request: NextRequest) {
   }
 
   if (user && pathname === "/login") {
-    const role = user.user_metadata?.role;
-    const target = role === "coach" ? "/coach/today" : role === "student" ? "/student" : "/dashboard";
+    const account = normalizeAccount(user.user_metadata?.account) || accountFromEmail(user.email);
+    const target = accountHomePath(account);
     return NextResponse.redirect(new URL(target, request.url));
+  }
+
+  if (user && isProtectedPath(pathname)) {
+    const account = normalizeAccount(user.user_metadata?.account) || accountFromEmail(user.email);
+    if (!roleAllowedPath(account, pathname)) {
+      return NextResponse.redirect(new URL(accountHomePath(account), request.url));
+    }
   }
 
   return response;

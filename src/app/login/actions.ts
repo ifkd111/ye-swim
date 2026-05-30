@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { accountEmail, accountHomePath, roleFromAccount } from "@/lib/account-role";
 import { createClient } from "@/lib/supabase/server";
 
 function hasSupabaseConfig() {
@@ -26,19 +27,6 @@ function loginErrorUrl(message: string, nextPath: string) {
   return `/login?${params.toString()}`;
 }
 
-function accountEmail(account: string) {
-  const normalized = account.trim().toLowerCase();
-  if (normalized === "admin") {
-    return "admin@swimops.local";
-  }
-
-  if (normalized.startsWith("jl") || normalized.startsWith("qt") || normalized.startsWith("xy")) {
-    return `${normalized}@swimops.local`;
-  }
-
-  return normalized;
-}
-
 function mappedPassword(account: string, password: string) {
   if (password !== "1324") {
     return password;
@@ -50,10 +38,6 @@ function mappedPassword(account: string, password: string) {
 
   if (account.startsWith("jl")) {
     return process.env.DEMO_COACH_PASSWORD || password;
-  }
-
-  if (account.startsWith("qt")) {
-    return process.env.DEMO_FRONTDESK_PASSWORD || password;
   }
 
   if (account.startsWith("xy")) {
@@ -100,6 +84,11 @@ export async function login(formData: FormData) {
     redirect(loginErrorUrl("请输入账号", nextPath));
   }
 
+  const accountRole = roleFromAccount(account);
+  if (!accountRole) {
+    redirect(loginErrorUrl("账号格式不正确，请使用 admin / jl开头 / xy开头", nextPath));
+  }
+
   const email = accountEmail(account);
 
   if (!email.includes("@")) {
@@ -125,11 +114,7 @@ export async function login(formData: FormData) {
     redirect(loginErrorUrl("账号或密码错误", nextPath));
   }
 
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
-  const role = user?.user_metadata?.role;
-  const fallbackPath = role === "coach" ? "/coach/today" : role === "student" ? "/student" : "/dashboard";
+  const fallbackPath = accountHomePath(account);
 
   redirect(nextPath === "/dashboard" ? fallbackPath : nextPath);
 }

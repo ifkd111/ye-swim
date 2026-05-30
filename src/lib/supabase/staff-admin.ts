@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { accountFromEmail, normalizeAccount, roleFromAccount } from "@/lib/account-role";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { hasSupabaseAdminConfig, hasSupabaseBrowserConfig } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
@@ -65,7 +66,8 @@ export async function assertAdminSession() {
     throw new Error("Please sign in again");
   }
 
-  const role = userRoleFromMetadata(user.user_metadata?.role);
+  const account = normalizeAccount(user.user_metadata?.account) || accountFromEmail(user.email);
+  const role = roleFromAccount(account) ?? userRoleFromMetadata(user.user_metadata?.role);
   if (role !== "admin") {
     throw new Error("Only admins can manage staff accounts");
   }
