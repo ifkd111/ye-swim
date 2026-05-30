@@ -32,6 +32,8 @@ export async function markAttendance(scheduleId: string) {
   revalidatePath("/dashboard");
   revalidatePath("/schedule");
   revalidatePath("/attendance");
+  revalidatePath("/members");
+  revalidatePath("/student");
 
   return {
     ok: true,

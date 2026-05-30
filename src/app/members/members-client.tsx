@@ -162,7 +162,7 @@ export function MembersClient({
           />
         </label>
         <div className="flex gap-2 overflow-x-auto">
-          {(["全部", "正常", "即将用完", "欠课"] as const).map((item) => (
+          {(["全部", "正常", "即将用完", "已完成", "欠课"] as const).map((item) => (
             <button
               className={`h-13 shrink-0 rounded-3xl border px-4 text-sm font-extrabold transition ${
                 status === item

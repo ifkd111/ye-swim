@@ -15,7 +15,7 @@ export function getSeedData(): SeedData {
 
 export function getMembers(): Member[] {
   return [...getSeedData().members].sort((a, b) => {
-    const statusWeight = { 欠课: 0, 即将用完: 1, 正常: 2 };
+    const statusWeight = { 欠课: 0, 即将用完: 1, 已完成: 2, 正常: 3 };
     return statusWeight[a.status] - statusWeight[b.status] || a.chineseName.localeCompare(b.chineseName, "zh-CN");
   });
 }

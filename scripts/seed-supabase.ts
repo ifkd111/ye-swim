@@ -37,6 +37,7 @@ type StaffSeed = {
   role: UserRole;
   campus: string | null;
   coachName: string | null;
+  memberId?: string | null;
 };
 
 async function failIfError<T>({ data, error }: { data: T | null; error: any }, label: string): Promise<T> {
@@ -78,6 +79,10 @@ function assertValidAccount(account: StaffSeed) {
 
   if (account.role === "frontdesk" && !account.account.startsWith("qt")) {
     throw new Error(`Frontdesk account must start with qt: ${account.account}`);
+  }
+
+  if (account.role === "student" && !account.account.startsWith("xy")) {
+    throw new Error(`Student account must start with xy: ${account.account}`);
   }
 }
 
@@ -143,7 +148,6 @@ async function ensureAuthUser(account: StaffSeed) {
 async function seedStaffAccounts() {
   const coachAssignment = resolveCoachAssignment();
   const adminAccount = envOrDefault("DEMO_ADMIN_ACCOUNT", "admin").toLowerCase();
-  const frontdeskAccount = envOrDefault("DEMO_FRONTDESK_ACCOUNT", "qt001").toLowerCase();
   const coachAccount = envOrDefault("DEMO_COACH_ACCOUNT", "jl001").toLowerCase();
 
   const accounts: StaffSeed[] = [
@@ -154,15 +158,6 @@ async function seedStaffAccounts() {
       fullName: "管理员",
       role: "admin",
       campus: null,
-      coachName: null
-    },
-    {
-      account: frontdeskAccount,
-      email: accountToEmail(frontdeskAccount),
-      password: envOrDefault("DEMO_FRONTDESK_PASSWORD", "132400"),
-      fullName: "前台",
-      role: "frontdesk",
-      campus: coachAssignment.campus,
       coachName: null
     },
     {
@@ -185,8 +180,10 @@ async function seedStaffAccounts() {
         id: user.id,
         full_name: account.fullName,
         role: account.role,
+        account: account.account,
         campus: account.campus,
         coach_name: account.coachName,
+        member_id: account.memberId ?? null,
         updated_at: new Date().toISOString()
       }),
       `upsert profile ${account.account}`
@@ -232,6 +229,7 @@ async function seedProducts() {
           type: product.type,
           total_lessons: product.totalLessons,
           valid_days: product.validDays,
+          price: product.price ?? 0,
           notes: product.notes
         })
         .select("id")
@@ -361,7 +359,6 @@ async function main() {
   await seedAttendance();
 
   const admin = staffAccounts.find((account) => account.role === "admin");
-  const frontdesk = staffAccounts.find((account) => account.role === "frontdesk");
   const coach = staffAccounts.find((account) => account.role === "coach");
 
   console.log("Supabase seeded");
@@ -371,7 +368,6 @@ async function main() {
     schedules: seed.schedules.length,
     attendanceLogs: seed.attendanceLogs.length,
     admin: admin?.account,
-    frontdesk: frontdesk?.account,
     coach: coach?.account,
     coachName: coach?.coachName
   });

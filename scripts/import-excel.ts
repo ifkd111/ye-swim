@@ -41,6 +41,7 @@ const products: CourseProduct[] = [
     type: "class_pack",
     totalLessons: 20,
     validDays: 365,
+    price: 0,
     notes: "Excel 导入默认产品"
   },
   {
@@ -49,6 +50,7 @@ const products: CourseProduct[] = [
     type: "monthly",
     totalLessons: 0,
     validDays: 31,
+    price: 0,
     notes: "按有效期判断，不扣课时"
   },
   {
@@ -57,6 +59,7 @@ const products: CourseProduct[] = [
     type: "camp",
     totalLessons: 0,
     validDays: 14,
+    price: 0,
     notes: "按集训日期判断，不扣课时"
   },
   {
@@ -65,6 +68,7 @@ const products: CourseProduct[] = [
     type: "vip",
     totalLessons: 0,
     validDays: null,
+    price: 0,
     notes: "状态永远正常"
   }
 ];
@@ -463,7 +467,8 @@ function buildMembers(context: Context): Member[] {
       let status: Member["status"] = "正常";
 
       if (product.type === "class_pack") {
-        if (remaining <= 0) status = "欠课";
+        if (remaining < 0) status = "欠课";
+        else if (remaining === 0) status = "已完成";
         else if (remaining <= 5) status = "即将用完";
       }
 

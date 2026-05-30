@@ -1,5 +1,4 @@
 import { LogIn } from "lucide-react";
-import { ButtonLink } from "@/components/ui";
 import { login } from "./actions";
 
 export default async function LoginPage({
@@ -10,69 +9,65 @@ export default async function LoginPage({
   const params = await searchParams;
 
   return (
-    <main className="grid min-h-screen bg-[linear-gradient(135deg,_#f7f7f4_0%,_#eef5fb_52%,_#f8fafc_100%)] px-4 py-8 lg:grid-cols-[1fr_520px] lg:p-0">
-      <section className="hidden bg-[radial-gradient(circle_at_top_left,_rgba(37,99,235,0.16),_transparent_34%),linear-gradient(180deg,_#172347_0%,_#111a34_100%)] px-12 py-16 text-white lg:flex lg:flex-col lg:justify-between">
-        <div className="flex items-center gap-2 font-semibold">
-          <span className="flex size-11 items-center justify-center rounded-3xl bg-white text-pool-700">泳</span>
-          SwimOps
+    <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(ellipse_at_30%_20%,rgba(6,182,212,0.07),transparent_50%),radial-gradient(ellipse_at_70%_80%,rgba(59,130,246,0.05),transparent_50%),#060c1a] px-4 py-8 text-slate-100">
+      <section className="w-full max-w-[380px] rounded-[18px] border border-white/[0.08] bg-[#0c1525] px-9 py-10 shadow-2xl">
+        <div className="flex items-center justify-center gap-3 text-center text-xl font-bold">
+          <span className="flex size-10 items-center justify-center rounded-lg bg-cyan-400/10 text-cyan-300">泳</span>
+          游泳培训管理系统
         </div>
-        <div>
-          <h1 className="max-w-xl text-5xl font-black leading-tight tracking-[-0.04em]">开始今天的课程安排和出勤记录。</h1>
-          <p className="mt-5 max-w-lg text-base font-semibold leading-7 text-pool-50">
-            前台可以安排课程，教练可以确认出勤，管理员可以查看整体情况。登录后会自动进入对应的工作页面。
-          </p>
-        </div>
-        <div className="grid max-w-xl gap-3 text-sm font-semibold text-pool-100">
-          <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">管理员：查看全部并管理账号</div>
-          <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">前台：录入学员、安排课程、查看记录</div>
-          <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">教练：手机确认上课出勤</div>
-        </div>
-      </section>
+        <p className="mt-2 text-center text-sm text-slate-400">小型游泳培训机构一站式管理</p>
 
-      <section className="mx-auto flex w-full max-w-md flex-col justify-center lg:px-12">
-        <div className="rounded-[2rem] border border-white/70 bg-white/92 p-6 shadow-soft backdrop-blur">
-          <div className="flex size-14 items-center justify-center rounded-3xl bg-pool-50 text-pool-700">
-            <LogIn size={22} />
-          </div>
-          <h2 className="mt-5 text-3xl font-black text-ink">员工登录</h2>
-          <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">
-            输入你的登录账号和密码即可进入工作台。
-          </p>
-          <form action={login} className="mt-6 space-y-3">
-            <input name="next" type="hidden" value={params?.next ?? ""} />
-            <label className="block text-sm font-medium text-slate-700">
-              账号
-              <input
-                className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-[#f7faff] px-4 font-bold outline-none transition focus:border-pool-500 focus:ring-4 focus:ring-pool-100"
-                name="account"
-                placeholder="请输入登录账号"
-                type="text"
-              />
-            </label>
-            <label className="block text-sm font-medium text-slate-700">
-              密码
-              <input
-                className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-[#f7faff] px-4 font-bold outline-none transition focus:border-pool-500 focus:ring-4 focus:ring-pool-100"
-                name="password"
-                placeholder="请输入密码"
-                type="password"
-              />
-            </label>
-            {params?.error ? (
-              <p className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">
-                {params.error}
-              </p>
-            ) : null}
-            <button className="inline-flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-ink px-4 text-sm font-black text-white shadow-soft transition hover:-translate-y-0.5 hover:bg-pool-700 focus:outline-none focus:ring-2 focus:ring-pool-500 focus:ring-offset-2 active:scale-[0.98]">
-              登录
+        <div className="mt-7 grid grid-cols-3 gap-2">
+          {[
+            ["管理员", "admin"],
+            ["教练", "jl001"],
+            ["学员", "xy001"]
+          ].map(([label, account], index) => (
+            <button
+              className={`rounded-lg border px-2 py-3 text-sm font-semibold transition ${index === 0 ? "border-cyan-400 bg-cyan-400/10 text-cyan-300" : "border-white/[0.08] text-slate-400 hover:border-cyan-400/40 hover:text-cyan-300"}`}
+              form="loginForm"
+              key={label}
+              name="quickAccount"
+              type="submit"
+              value={account}
+            >
+              {label}
             </button>
-          </form>
-          <div className="mt-3 flex flex-col gap-3">
-            <ButtonLink href="/coach/today" className="h-11" variant="secondary">
-              打开教练手机页
-            </ButtonLink>
-          </div>
+          ))}
         </div>
+
+        <form action={login} className="mt-6 space-y-4" id="loginForm">
+          <input name="next" type="hidden" value={params?.next ?? ""} />
+          <label className="block text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+            账号
+            <input
+              className="mt-2 h-11 w-full rounded-md border border-white/[0.08] bg-[#131e33] px-4 text-sm font-semibold text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-cyan-400/50"
+              defaultValue="admin"
+              name="account"
+              placeholder="admin / jl001 / xy001"
+              type="text"
+            />
+          </label>
+          <label className="block text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+            密码
+            <input
+              className="mt-2 h-11 w-full rounded-md border border-white/[0.08] bg-[#131e33] px-4 text-sm font-semibold text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-cyan-400/50"
+              defaultValue="1324"
+              name="password"
+              placeholder="请输入密码"
+              type="password"
+            />
+          </label>
+          {params?.error ? (
+            <p className="rounded-md border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-300">
+              {params.error}
+            </p>
+          ) : null}
+          <button className="inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-cyan-400 px-4 text-sm font-bold text-[#060c1a] transition hover:bg-cyan-300">
+            <LogIn size={17} />
+            登录
+          </button>
+        </form>
       </section>
     </main>
   );

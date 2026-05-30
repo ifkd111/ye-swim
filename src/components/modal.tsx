@@ -20,16 +20,16 @@ export function Modal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/35 p-3 backdrop-blur-sm sm:items-center">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-3 backdrop-blur-sm sm:items-center">
       <div
         className={clsx(
-          "max-h-[92vh] w-full max-w-2xl overflow-hidden rounded-3xl border border-white/70 bg-white shadow-soft",
+          "max-h-[92vh] w-full max-w-2xl overflow-hidden rounded-lg border border-white/[0.08] bg-[#0c1525] shadow-2xl",
           className
         )}
       >
-        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-          <h2 className="text-lg font-black text-ink">{title}</h2>
-          <Button aria-label="关闭" className="size-10 rounded-2xl px-0" onClick={onClose} type="button" variant="ghost">
+        <div className="flex items-center justify-between border-b border-white/[0.08] px-5 py-4">
+          <h2 className="text-base font-semibold text-slate-100">{title}</h2>
+          <Button aria-label="关闭" className="size-9 rounded-md px-0" onClick={onClose} type="button" variant="ghost">
             <X size={18} />
           </Button>
         </div>
@@ -49,16 +49,16 @@ export function Field({
   hint?: string;
 }) {
   return (
-    <label className="block text-sm font-extrabold text-slate-700">
+    <label className="block text-sm font-semibold text-slate-400">
       {label}
       <div className="mt-2">{children}</div>
-      {hint ? <p className="mt-1 text-xs font-medium text-slate-400">{hint}</p> : null}
+      {hint ? <p className="mt-1 text-xs font-medium text-slate-600">{hint}</p> : null}
     </label>
   );
 }
 
 export const inputClass =
-  "h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-bold text-ink outline-none transition focus:border-pool-500 focus:ring-4 focus:ring-pool-100";
+  "h-11 w-full rounded-md border border-white/[0.08] bg-[#131e33] px-3 text-sm font-semibold text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-cyan-400/50";
 
 export const textareaClass =
-  "min-h-24 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-ink outline-none transition focus:border-pool-500 focus:ring-4 focus:ring-pool-100";
+  "min-h-24 w-full rounded-md border border-white/[0.08] bg-[#131e33] px-3 py-3 text-sm font-semibold text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-cyan-400/50";

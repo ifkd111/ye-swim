@@ -10,7 +10,8 @@ export function calculateMemberStatus(productType: ProductType, totalLessons: nu
   }
 
   const remaining = totalLessons - usedLessons;
-  if (remaining <= 0) return "欠课";
+  if (remaining < 0) return "欠课";
+  if (remaining === 0) return "已完成";
   if (remaining <= 5) return "即将用完";
   return "正常";
 }

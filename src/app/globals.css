@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 * {
@@ -16,10 +16,10 @@ html {
 
 body {
   margin: 0;
-  background: #f5f8fb;
-  color: #1e2442;
+  background: #060c1a;
+  color: #eef2f7;
   font-family:
-    "Nunito Sans", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "Noto Sans SC", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
 }
 
@@ -41,13 +41,13 @@ a {
 }
 
 ::selection {
-  background: #b9ece8;
-  color: #1e2442;
+  background: rgba(34, 211, 238, 0.35);
+  color: #eef2f7;
 }
 
 .soft-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: #b8e3ff transparent;
+  scrollbar-color: #243352 transparent;
 }
 
 .soft-scrollbar::-webkit-scrollbar {
@@ -56,8 +56,137 @@ a {
 }
 
 .soft-scrollbar::-webkit-scrollbar-thumb {
-  background: #b8e3ff;
-  border-radius: 999px;
+  background: #243352;
+  border-radius: 5px;
+}
+
+/* V3 compact dark operations theme. Keeps older Tailwind page code visually aligned with code.html. */
+.bg-white,
+.bg-white\/80,
+.bg-white\/88,
+.bg-white\/90,
+.bg-white\/92,
+.bg-\[\#f8fafc\],
+.bg-\[\#fcfbf7\],
+.bg-\[\#f7faff\],
+.bg-slate-50,
+.bg-slate-50\/80 {
+  background-color: #0c1525 !important;
+}
+
+.bg-pool-50 {
+  background-color: rgba(6, 182, 212, 0.1) !important;
+}
+
+.border-slate-100,
+.border-slate-200,
+.border-slate-200\/70,
+.border-slate-200\/80,
+.border-white\/60,
+.border-white\/70,
+.border-white\/80 {
+  border-color: rgba(148, 163, 184, 0.08) !important;
+}
+
+.text-ink,
+.text-slate-700,
+.text-slate-600 {
+  color: #eef2f7 !important;
+}
+
+.text-slate-500,
+.text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+.text-pool-700,
+.text-pool-600 {
+  color: #22d3ee !important;
+}
+
+.text-white {
+  color: #eef2f7 !important;
+}
+
+.bg-ink {
+  background-color: #06b6d4 !important;
+  color: #060c1a !important;
+}
+
+.border-ink {
+  border-color: #06b6d4 !important;
+}
+
+.rounded-3xl,
+.rounded-\[2rem\],
+.rounded-\[1\.75rem\],
+.rounded-\[1\.6rem\],
+.rounded-\[1\.5rem\] {
+  border-radius: 10px !important;
+}
+
+.rounded-2xl {
+  border-radius: 7px !important;
+}
+
+.h-13 {
+  height: 2.75rem !important;
+}
+
+.text-4xl {
+  font-size: 1.8rem !important;
+  line-height: 2.2rem !important;
+}
+
+.text-3xl {
+  font-size: 1.35rem !important;
+  line-height: 1.8rem !important;
+}
+
+.font-black,
+.font-extrabold {
+  font-weight: 600 !important;
+}
+
+.hover\:-translate-y-0\.5:hover {
+  transform: none !important;
+}
+
+.shadow-line,
+.shadow-soft {
+  box-shadow: none !important;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+thead {
+  background-color: rgba(19, 30, 51, 0.9) !important;
+}
+
+tbody tr {
+  background-color: #0c1525 !important;
+}
+
+tbody tr:hover {
+  background-color: rgba(6, 182, 212, 0.04) !important;
+}
+
+th {
+  color: #64748b !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+}
+
+td {
+  border-color: rgba(148, 163, 184, 0.08) !important;
+}
+
+input,
+select,
+textarea {
+  color: #eef2f7;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,4 +1,14 @@
-import type { AttendanceLog, CourseProduct, Member, ProductType, Schedule } from "@/lib/types";
+import type {
+  AttendanceLog,
+  BookingRequest,
+  CoachAvailabilitySlot,
+  CourseApplication,
+  CourseProduct,
+  Member,
+  ProductType,
+  Schedule,
+  StudentRegistration
+} from "@/lib/types";
 
 type AnyRow = Record<string, any>;
 
@@ -9,6 +19,7 @@ export function toProduct(row: AnyRow): CourseProduct {
     type: row.type,
     totalLessons: row.total_lessons ?? 0,
     validDays: row.valid_days ?? null,
+    price: row.price ?? 0,
     notes: row.notes ?? null
   };
 }
@@ -78,5 +89,74 @@ export function toAttendanceLog(row: AnyRow): AttendanceLog {
     sourceScheduleId: row.source_schedule_id ?? null,
     source: row.source ?? null,
     sourceNote: row.source_note ?? null
+  };
+}
+
+export function toAvailabilitySlot(row: AnyRow): CoachAvailabilitySlot {
+  return {
+    id: row.id,
+    slotDate: row.slot_date,
+    slotTime: row.slot_time,
+    campus: row.campus,
+    coach: row.coach,
+    capacity: row.capacity ?? 1,
+    status: row.status ?? "draft",
+    publishOrder: row.publish_order ?? 100,
+    notes: row.notes ?? null,
+    createdBy: row.created_by ?? null,
+    createdAt: row.created_at ?? null
+  };
+}
+
+export function toBookingRequest(row: AnyRow): BookingRequest {
+  const slot = row.coach_availability_slots ?? row.slot ?? {};
+  const memberName = row.members?.chinese_name ?? row.member?.chinese_name ?? row.member_name ?? "未命名";
+
+  return {
+    id: row.id,
+    slotId: row.slot_id,
+    memberId: row.member_id,
+    memberName,
+    slotDate: row.slot_date ?? slot.slot_date,
+    slotTime: row.slot_time ?? slot.slot_time,
+    campus: row.campus ?? slot.campus,
+    coach: row.coach ?? slot.coach,
+    status: row.status ?? "pending",
+    note: row.note ?? null,
+    reviewedAt: row.reviewed_at ?? null,
+    createdScheduleId: row.created_schedule_id ?? null,
+    createdAt: row.created_at ?? null
+  };
+}
+
+export function toCourseApplication(row: AnyRow): CourseApplication {
+  const memberName = row.members?.chinese_name ?? row.member?.chinese_name ?? row.member_name ?? "未命名";
+  const productName = row.course_products?.name ?? row.product?.name ?? row.product_name ?? "课程";
+
+  return {
+    id: row.id,
+    memberId: row.member_id,
+    memberName,
+    productId: row.product_id,
+    productName,
+    status: row.status ?? "pending",
+    note: row.note ?? null,
+    reviewedAt: row.reviewed_at ?? null,
+    createdAt: row.created_at ?? null
+  };
+}
+
+export function toStudentRegistration(row: AnyRow): StudentRegistration {
+  return {
+    id: row.id,
+    name: row.name,
+    phone: row.phone,
+    productId: row.product_id ?? null,
+    campus: row.campus ?? null,
+    coach: row.coach ?? null,
+    note: row.note ?? null,
+    status: row.status ?? "pending",
+    reviewedAt: row.reviewed_at ?? null,
+    createdAt: row.created_at ?? null
   };
 }

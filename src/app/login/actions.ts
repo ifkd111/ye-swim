@@ -32,7 +32,7 @@ function accountEmail(account: string) {
     return "admin@swimops.local";
   }
 
-  if (normalized.startsWith("jl") || normalized.startsWith("qt")) {
+  if (normalized.startsWith("jl") || normalized.startsWith("qt") || normalized.startsWith("xy")) {
     return `${normalized}@swimops.local`;
   }
 
@@ -56,11 +56,35 @@ function mappedPassword(account: string, password: string) {
     return process.env.DEMO_FRONTDESK_PASSWORD || password;
   }
 
+  if (account.startsWith("xy")) {
+    return process.env.DEMO_STUDENT_PASSWORD || password;
+  }
+
   return password;
 }
 
+function fallbackPasswords(account: string, password: string) {
+  const primary = mappedPassword(account, password);
+  const fallbacks = [primary];
+
+  if (account === "admin" && password === "1324" && primary !== "132400") {
+    fallbacks.push("132400");
+  }
+
+  if (account.startsWith("jl") && password === "1324" && primary !== "132400") {
+    fallbacks.push("132400");
+  }
+
+  if (account.startsWith("xy") && password === "1324" && primary !== "132400") {
+    fallbacks.push("132400");
+  }
+
+  return fallbacks;
+}
+
 export async function login(formData: FormData) {
-  const account = String(formData.get("account") ?? "").trim().toLowerCase();
+  const quickAccount = String(formData.get("quickAccount") ?? "").trim().toLowerCase();
+  const account = (quickAccount || String(formData.get("account") ?? "")).trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
   const nextPath = normalizeNextPath(formData.get("next"));
 
@@ -77,23 +101,37 @@ export async function login(formData: FormData) {
   }
 
   const email = accountEmail(account);
-  const passwordToUse = mappedPassword(account, password);
 
   if (!email.includes("@")) {
     redirect(loginErrorUrl("账号格式不正确", nextPath));
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({
-    email,
-    password: passwordToUse
-  });
+  let loginError: unknown = null;
+  for (const passwordToUse of fallbackPasswords(account, password)) {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password: passwordToUse
+    });
 
-  if (error) {
+    loginError = error;
+    if (!error) {
+      loginError = null;
+      break;
+    }
+  }
+
+  if (loginError) {
     redirect(loginErrorUrl("账号或密码错误", nextPath));
   }
 
-  redirect(nextPath);
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+  const role = user?.user_metadata?.role;
+  const fallbackPath = role === "coach" ? "/coach/today" : role === "student" ? "/student" : "/dashboard";
+
+  redirect(nextPath === "/dashboard" ? fallbackPath : nextPath);
 }
 
 export async function logout() {

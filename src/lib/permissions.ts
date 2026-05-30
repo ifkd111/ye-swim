@@ -9,6 +9,14 @@ export function canManageSchedules(role: UserRole | null, dataMode: DataMode) {
   return dataMode === "demo" || role === "admin" || role === "frontdesk";
 }
 
+export function canManageBookings(role: UserRole | null, dataMode: DataMode) {
+  return dataMode === "demo" || role === "admin" || role === "frontdesk";
+}
+
+export function canManageAvailability(role: UserRole | null, dataMode: DataMode) {
+  return dataMode === "demo" || role === "admin" || role === "frontdesk";
+}
+
 export function canManageStaff(role: UserRole | null) {
   return role === "admin";
 }
@@ -17,5 +25,6 @@ export function getRoleLabel(role: UserRole | null) {
   if (role === "admin") return "管理员";
   if (role === "frontdesk") return "前台";
   if (role === "coach") return "教练";
+  if (role === "student") return "学员";
   return "访客";
 }

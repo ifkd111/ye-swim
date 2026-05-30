@@ -6,7 +6,7 @@ import { hasSupabaseAdminConfig } from "@/lib/supabase/config";
 import { assertAdminSession } from "@/lib/supabase/staff-admin";
 import type { UserRole } from "@/lib/types";
 
-const validRoles: UserRole[] = ["admin", "frontdesk", "coach"];
+const validRoles: UserRole[] = ["admin", "coach", "student"];
 
 function emptyToNull(value: FormDataEntryValue | null) {
   const text = String(value ?? "").trim();
@@ -32,6 +32,8 @@ function buildProfilePayload(formData: FormData) {
   const role = normalizeRole(formData.get("role"));
   const campus = emptyToNull(formData.get("campus"));
   const rawCoachName = emptyToNull(formData.get("coachName"));
+  const remarkName = emptyToNull(formData.get("remarkName"));
+  const memberId = emptyToNull(formData.get("memberId"));
   const password = String(formData.get("password") ?? "");
 
   if (!fullName) {
@@ -54,13 +56,17 @@ function buildProfilePayload(formData: FormData) {
     return { ok: false as const, message: "教练账号必须以 jl 开头" };
   }
 
-  if (role === "frontdesk" && !account.startsWith("qt")) {
-    return { ok: false as const, message: "前台账号必须以 qt 开头" };
+  if (role === "student" && !account.startsWith("xy")) {
+    return { ok: false as const, message: "学员账号必须以 xy 开头" };
   }
 
   const coachName = role === "coach" ? rawCoachName : null;
   if (role === "coach" && !coachName) {
     return { ok: false as const, message: "教练账号必须填写教练名称，并与排课中的教练字段一致" };
+  }
+
+  if (role === "student" && !memberId) {
+    return { ok: false as const, message: "学员账号必须绑定一个学员档案" };
   }
 
   if (password && password.length < 4) {
@@ -76,6 +82,8 @@ function buildProfilePayload(formData: FormData) {
       role,
       campus,
       coachName,
+      remarkName,
+      memberId: role === "student" ? memberId : null,
       password
     }
   };
@@ -106,7 +114,8 @@ export async function createStaffAccountAction(formData: FormData) {
     email_confirm: true,
     user_metadata: {
       full_name: parsed.payload.fullName,
-      account: parsed.payload.account
+      account: parsed.payload.account,
+      role: parsed.payload.role
     }
   });
 
@@ -118,8 +127,11 @@ export async function createStaffAccountAction(formData: FormData) {
     id: created.data.user.id,
     full_name: parsed.payload.fullName,
     role: parsed.payload.role,
+    account: parsed.payload.account,
     campus: parsed.payload.campus,
     coach_name: parsed.payload.coachName,
+    remark_name: parsed.payload.remarkName,
+    member_id: parsed.payload.memberId,
     updated_at: new Date().toISOString()
   });
 
@@ -149,13 +161,14 @@ export async function updateStaffAccountAction(userId: string, formData: FormDat
   const admin = createAdminClient();
   const authPayload: {
     email: string;
-    user_metadata: { full_name: string; account: string };
+    user_metadata: { full_name: string; account: string; role: UserRole };
     password?: string;
   } = {
     email: parsed.payload.email,
     user_metadata: {
       full_name: parsed.payload.fullName,
-      account: parsed.payload.account
+      account: parsed.payload.account,
+      role: parsed.payload.role
     }
   };
 
@@ -173,8 +186,11 @@ export async function updateStaffAccountAction(userId: string, formData: FormDat
     .update({
       full_name: parsed.payload.fullName,
       role: parsed.payload.role,
+      account: parsed.payload.account,
       campus: parsed.payload.campus,
       coach_name: parsed.payload.coachName,
+      remark_name: parsed.payload.remarkName,
+      member_id: parsed.payload.memberId,
       updated_at: new Date().toISOString()
     })
     .eq("id", userId);

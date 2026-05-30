@@ -8,8 +8,11 @@ type ProfileRow = {
   id: string;
   full_name: string;
   role: UserRole;
+  account: string | null;
   campus: string | null;
   coach_name: string | null;
+  remark_name: string | null;
+  member_id: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -26,18 +29,26 @@ export type StaffAccount = {
   email: string;
   fullName: string;
   role: UserRole;
+  account: string | null;
   campus: string | null;
   coachName: string | null;
+  remarkName: string | null;
+  memberId: string | null;
+  memberName: string | null;
   createdAt: string | null;
   lastSignInAt: string | null;
   isCurrentUser: boolean;
 };
 
 function userRoleFromMetadata(value: unknown): UserRole | null {
-  if (value === "admin" || value === "frontdesk" || value === "coach") {
+  if (value === "admin" || value === "frontdesk" || value === "coach" || value === "student") {
     return value;
   }
   return null;
+}
+
+function isMissingSchema(error: { code?: string; message?: string } | null | undefined) {
+  return error?.code === "42703" || error?.code === "42P01" || error?.message?.includes("does not exist");
 }
 
 export async function assertAdminSession() {
@@ -90,10 +101,17 @@ export async function listStaffAccounts(): Promise<{
   }
 
   const admin = createAdminClient();
-  const [{ data: profiles, error: profilesError }, usersResult] = await Promise.all([
-    admin.from("profiles").select("*").order("created_at", { ascending: true }),
-    admin.auth.admin.listUsers()
-  ]);
+  const usersResult = await admin.auth.admin.listUsers();
+  let { data: profiles, error: profilesError } = await admin
+    .from("profiles")
+    .select("*, members(chinese_name)")
+    .order("created_at", { ascending: true });
+
+  if (profilesError && isMissingSchema(profilesError)) {
+    const fallback = await admin.from("profiles").select("*").order("created_at", { ascending: true });
+    profiles = fallback.data;
+    profilesError = fallback.error;
+  }
 
   if (profilesError) {
     throw new Error(profilesError.message);
@@ -117,8 +135,12 @@ export async function listStaffAccounts(): Promise<{
       email: authUser.email ?? "",
       fullName: profile.full_name,
       role: profile.role,
+      account: profile.account,
       campus: profile.campus,
       coachName: profile.coach_name,
+      remarkName: profile.remark_name ?? null,
+      memberId: profile.member_id,
+      memberName: (profile as any).members?.chinese_name ?? null,
       createdAt: authUser.created_at ?? profile.created_at ?? null,
       lastSignInAt: authUser.last_sign_in_at ?? null,
       isCurrentUser: user.id === currentUser.id

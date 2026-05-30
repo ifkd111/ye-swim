@@ -1,6 +1,6 @@
 {
   "name": "swim-training-manager",
-  "version": "0.1.0",
+  "version": "0.0.2",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,8 +9,11 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "import:excel": "tsx scripts/import-excel.ts",
+    "students:accounts": "tsx scripts/create-student-accounts.ts",
     "supabase:seed": "tsx scripts/seed-supabase.ts",
-    "supabase:schema": "tsx scripts/apply-schema.ts"
+    "supabase:schema": "tsx scripts/apply-schema.ts",
+    "db:migrate": "tsx scripts/db-migrate.ts",
+    "db:rollback": "tsx scripts/db-rollback.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.1",
@@ -21,7 +24,8 @@
     "next": "^15.1.0",
     "pg": "^8.13.1",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "react-loading-skeleton": "^3.5.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.5",

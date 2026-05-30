@@ -17,3 +17,4 @@ yarn-error.log*
 *.xlsx
 *.zip
 src/data/seed.json
+student-accounts.generated.csv

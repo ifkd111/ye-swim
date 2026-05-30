@@ -5,6 +5,10 @@ export function getStatusTone(status: Member["status"]) {
     return "border-red-200 bg-red-50 text-red-700";
   }
 
+  if (status === "已完成") {
+    return "border-slate-200 bg-slate-50 text-slate-700";
+  }
+
   if (status === "即将用完") {
     return "border-amber-200 bg-amber-50 text-amber-800";
   }

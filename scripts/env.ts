@@ -13,6 +13,6 @@ export function loadLocalEnv() {
     if (index === -1) continue;
     const key = trimmed.slice(0, index);
     const value = trimmed.slice(index + 1);
-    process.env[key] ??= value;
+    process.env[key] = value;
   }
 }

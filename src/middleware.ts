@@ -1,7 +1,20 @@
 import { createServerClient, type SetAllCookies } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
-const protectedPrefixes = ["/dashboard", "/members", "/products", "/schedule", "/attendance", "/coach", "/staff"];
+const protectedPrefixes = [
+  "/dashboard",
+  "/members",
+  "/products",
+  "/schedule",
+  "/attendance",
+  "/coach",
+  "/staff",
+  "/student",
+  "/availability",
+  "/booking-requests",
+  "/course-applications",
+  "/imports"
+];
 
 function hasSupabaseConfig() {
   return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
@@ -52,7 +65,9 @@ export async function middleware(request: NextRequest) {
   }
 
   if (user && pathname === "/login") {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    const role = user.user_metadata?.role;
+    const target = role === "coach" ? "/coach/today" : role === "student" ? "/student" : "/dashboard";
+    return NextResponse.redirect(new URL(target, request.url));
   }
 
   return response;

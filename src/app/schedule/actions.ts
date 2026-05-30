@@ -58,20 +58,30 @@ export async function updateScheduleAction(scheduleId: string, formData: FormDat
   const { error } = await supabase.from("schedules").update(payload).eq("id", scheduleId);
   if (error) return { ok: false, message: error.message };
 
+  const { error: syncError } = await supabase.rpc("sync_completed_schedule_attendance", {
+    schedule_uuid: scheduleId
+  });
+  if (syncError) return { ok: false, message: syncError.message };
+
   revalidatePath("/schedule");
   revalidatePath("/dashboard");
   revalidatePath("/coach/today");
+  revalidatePath("/members");
+  revalidatePath("/attendance");
   return { ok: true, message: "排课已更新" };
 }
 
 export async function deleteScheduleAction(scheduleId: string) {
   const supabase = await createClient();
+  await supabase.from("attendance_logs").delete().eq("source_schedule_id", scheduleId);
   const { error } = await supabase.from("schedules").delete().eq("id", scheduleId);
   if (error) return { ok: false, message: error.message };
 
   revalidatePath("/schedule");
   revalidatePath("/dashboard");
   revalidatePath("/coach/today");
+  revalidatePath("/members");
+  revalidatePath("/attendance");
   return { ok: true, message: "排课已删除" };
 }
 
@@ -87,5 +97,7 @@ export async function completeScheduleAction(scheduleId: string) {
   revalidatePath("/dashboard");
   revalidatePath("/coach/today");
   revalidatePath("/attendance");
+  revalidatePath("/members");
+  revalidatePath("/student");
   return { ok: true, message: "已出勤并写入消课日志" };
 }
